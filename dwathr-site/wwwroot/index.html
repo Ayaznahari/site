@@ -1703,6 +1703,25 @@
             -webkit-text-fill-color: #111111 !important;
             color: #111111 !important;
         }
+
+
+
+
+        .form-success {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555555;
+            letter-spacing: 0.1em;
+            margin-top: 0.5rem;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+            .form-success.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
     </style>
 </head>
 <body>
@@ -2063,25 +2082,27 @@
                 </div>
             </div>
             <div class="reveal reveal-delay-2">
-                <div class="contact-form">
+                <form class="contact-form" action="https://formspree.io/f/mwvzepez" method="POST">
                     <div class="form-group">
                         <label class="form-label" data-en>Full Name</label>
                         <label class="form-label" data-ar>الاسم الكامل</label>
-                        <input type="text" class="form-input">
+                        <input type="text" name="name" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label" data-en>Email Address</label>
                         <label class="form-label" data-ar>البريد الإلكتروني</label>
-                        <input type="email" class="form-input">
+                        <input type="email" name="email" class="form-input" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label" data-en>Message</label>
                         <label class="form-label" data-ar>الرسالة</label>
-                        <textarea class="form-textarea"></textarea>
+                        <textarea name="message" class="form-textarea" required></textarea>
                     </div>
-                    <button class="form-submit" data-en>Send Message</button>
-                    <button class="form-submit" data-ar>إرسال الرسالة</button>
-                </div>
+                    <button type="submit" class="form-submit" data-en>Send Message</button>
+                    <button type="submit" class="form-submit" data-ar>إرسال الرسالة</button>
+                    <p class="form-success" id="form-success" data-en style="display:none;">✓ Message sent successfully.</p>
+                    <p class="form-success" id="form-success-ar" data-ar style="display:none;">✓ تم إرسال رسالتك بنجاح.</p>
+                </form>
             </div>
         </div>
     </section>
@@ -2137,6 +2158,40 @@
             entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
         }, { threshold: .1 });
         revealEls.forEach(el => observer.observe(el));
+
+        // Formspree AJAX submit
+        const contactForm = document.querySelector('.contact-form');
+        if (contactForm) {
+            contactForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const btn = this.querySelectorAll('.form-submit');
+                btn.forEach(b => { b.disabled = true; b.style.opacity = '0.5'; });
+
+                try {
+                    const res = await fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this),
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    if (res.ok) {
+                        this.reset();
+                        // Show success message for current lang
+                        const lang = document.documentElement.getAttribute('lang');
+                        const successId = lang === 'ar' ? 'form-success-ar' : 'form-success';
+                        const msg = document.getElementById(successId);
+                        if (msg) { msg.style.display = 'block'; setTimeout(() => msg.classList.add('visible'), 10); }
+                    } else {
+                        alert('Something went wrong. Please try again.');
+                    }
+                } catch (err) {
+                    alert('Network error. Please try again.');
+                } finally {
+                    btn.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+                }
+            });
+        }
+
     </script>
 </body>
 </html>
